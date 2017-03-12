@@ -80,8 +80,8 @@ viewFriendList friends =
 
 viewFriend : Friend -> Html Msg
 viewFriend friend =
-    li []
-        [ h4 [ class "friend-thumbnail" ]
+    li [ class "friend-list-item" ]
+        [ div [ class "friend" ]
             [ text (friend.name ++ " ")
             , span [ class "username" ] [ text friend.username ]
             ]
