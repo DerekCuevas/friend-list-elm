@@ -1,0 +1,52 @@
+[
+  {
+    "id": 0,
+    "name": "Bruce Wayne",
+    "username": "@Batman"
+  },
+  {
+    "id": 1,
+    "name": "Clark Kent",
+    "username": "@Superman"
+  },
+  {
+    "id": 2,
+    "name": "Maz ‘Magnus’ Eisenhardt",
+    "username": "@Magneto"
+  },
+  {
+    "id": 3,
+    "name": "Reed Richards",
+    "username": "@Mister-Fantastic"
+  },
+  {
+    "id": 4,
+    "name": "Charles Francis Xavier",
+    "username": "@ProfessorX"
+  },
+  {
+    "id": 5,
+    "name": "Lex Luthor",
+    "username": "@LexLuthor"
+  },
+  {
+    "id": 6,
+    "name": "Benjamin Grimm",
+    "username": "@Thing"
+  },
+  {
+    "id": 7,
+    "name": "Walter Langkowski",
+    "username": "@Sasquatch"
+  },
+  {
+    "id": 8,
+    "name": "Andrew Nolan",
+    "username": "@Ferro-Lad"
+  },
+  {
+    "id": 9,
+    "name": "Jonathan Osterman",
+    "username": "@Dr.Manhattan"
+  }
+]
