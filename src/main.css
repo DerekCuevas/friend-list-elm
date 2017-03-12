@@ -62,7 +62,7 @@ ul.friend-list li {
   font-weight: normal;
 }
 
-#search-input {
+.search-input {
   -moz-appearance: none;
   -webkit-appearance: none;
   width: 100%;
@@ -75,7 +75,7 @@ ul.friend-list li {
   transition: all 0.30s ease-in-out;
 }
 
-#search-input:focus {
+.search-input:focus {
   border: 2px solid rgb(189, 198, 207);
 }
 
