@@ -1,18 +1,16 @@
 module App exposing (..)
 
-import Html exposing (Html, text, div, img)
-import Html.Attributes exposing (src)
+import Html exposing (..)
 
 
 type alias Model =
     { message : String
-    , logo : String
     }
 
 
-init : String -> ( Model, Cmd Msg )
-init path =
-    ( { message = "Your Elm App is working!", logo = path }, Cmd.none )
+init : ( Model, Cmd Msg )
+init =
+    ( Model "Hello world!", Cmd.none )
 
 
 type Msg
@@ -26,10 +24,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ img [ src model.logo ] []
-        , div [] [ text model.message ]
-        ]
+    text model.message
 
 
 subscriptions : Model -> Sub Msg
