@@ -1,8 +1,10 @@
 module App exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (type_, placeholder, autocomplete, class)
 import Html.Events exposing (..)
+import Json.Decode exposing (Decoder, int, string, list)
+import Json.Decode.Pipeline exposing (decode, required)
 
 
 -- MODEL
@@ -14,6 +16,12 @@ mockFriends =
     , (Friend 1 "santa" "@s")
     , (Friend 2 "steve" "@apple")
     ]
+
+
+type alias Response =
+    { count : Int
+    , results : List Friend
+    }
 
 
 type alias Friend =
@@ -86,6 +94,25 @@ viewFriend friend =
             , span [ class "username" ] [ text friend.username ]
             ]
         ]
+
+
+
+-- HTTP
+
+
+decodeResponse : Json.Decode.Decoder Response
+decodeResponse =
+    decode Response
+        |> required "count" int
+        |> required "results" (list decodeFriend)
+
+
+decodeFriend : Json.Decode.Decoder Friend
+decodeFriend =
+    decode Friend
+        |> required "id" int
+        |> required "name" string
+        |> required "username" string
 
 
 
