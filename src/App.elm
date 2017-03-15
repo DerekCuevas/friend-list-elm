@@ -65,7 +65,7 @@ view : Model -> Html Msg
 view model =
     div [ class "app" ]
         [ (viewSearchInput model.query)
-        , (viewFriendList model.friends)
+        , (viewResults model.friends)
         ]
 
 
@@ -79,6 +79,15 @@ viewSearchInput query =
         , onInput SetQuery
         ]
         [ text query ]
+
+
+
+--TODO: switch on web data type - render error/loading/results
+
+
+viewResults : List Friend -> Html Msg
+viewResults friends =
+    viewFriendList friends
 
 
 viewFriendList : List Friend -> Html Msg
