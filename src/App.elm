@@ -5,17 +5,10 @@ import Html.Attributes exposing (type_, placeholder, autocomplete, class)
 import Html.Events exposing (..)
 import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
+import Http
 
 
 -- MODEL
-
-
-mockFriends : List Friend
-mockFriends =
-    [ (Friend 0 "john" "@jj")
-    , (Friend 1 "santa" "@s")
-    , (Friend 2 "steve" "@apple")
-    ]
 
 
 type alias Response =
@@ -39,7 +32,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" mockFriends, Cmd.none )
+    ( Model "" [], getFriends "" )
 
 
 
@@ -48,13 +41,20 @@ init =
 
 type Msg
     = SetQuery String
+    | NewResults (Result Http.Error Response)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetQuery newQuery ->
-            ( { model | query = newQuery }, Cmd.none )
+            ( { model | query = newQuery }, getFriends newQuery )
+
+        NewResults (Ok response) ->
+            ( { model | friends = response.results }, Cmd.none )
+
+        NewResults (Err _) ->
+            ( { model | friends = [] }, Cmd.none )
 
 
 
@@ -81,10 +81,9 @@ viewSearchInput query =
         [ text query ]
 
 
-
---TODO: switch on web data type - render error/loading/results
-
-
+{-|
+TODO: switch on web data type - render error/loading/results
+-}
 viewResults : List Friend -> Html Msg
 viewResults friends =
     viewFriendList friends
@@ -122,6 +121,15 @@ decodeFriend =
         |> required "id" int
         |> required "name" string
         |> required "username" string
+
+
+getFriends : String -> Cmd Msg
+getFriends query =
+    let
+        url =
+            "http://localhost:8000/api/friends?q=" ++ query
+    in
+        Http.send NewResults (Http.get url decodeResponse)
 
 
 

@@ -1,12 +1,16 @@
 const express = require('express');
+const cors = require('cors')
 const friends = require('./friends.json');
-const app = express();
 
 const FAILURE_RATE = 0.25;
 
+const app = express();
+
+app.use(cors());
+
 app.get('/api/friends', (req, res) => {
   const { query } = req;
-  const { q = '' } = query;
+  const q = (query.q || '').toLowerCase();
 
   const results = friends.filter((friend) => (
     Object.keys(friend).find(key => (
