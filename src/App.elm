@@ -98,7 +98,7 @@ viewResults friends =
             text "Loading."
 
         Failure _ ->
-            viewError "Sorry! Request for failed."
+            viewError "Sorry! Request failed."
 
         Success friends ->
             viewFriendList friends.results
