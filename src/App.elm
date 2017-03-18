@@ -6,12 +6,13 @@ import Html.Events exposing (..)
 import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
 import Http
+import RemoteData exposing (..)
 
 
 -- MODEL
 
 
-type alias Response =
+type alias Friends =
     { count : Int
     , results : List Friend
     }
@@ -26,13 +27,13 @@ type alias Friend =
 
 type alias Model =
     { query : String
-    , friends : List Friend
+    , friends : WebData Friends
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" [], getFriends "" )
+    ( Model "" Loading, getFriends "" )
 
 
 
@@ -41,20 +42,17 @@ init =
 
 type Msg
     = SetQuery String
-    | NewResults (Result Http.Error Response)
+    | FriendsResponse (WebData Friends)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetQuery newQuery ->
-            ( { model | query = newQuery }, getFriends newQuery )
+        SetQuery query ->
+            ( Model query Loading, getFriends query )
 
-        NewResults (Ok response) ->
-            ( { model | friends = response.results }, Cmd.none )
-
-        NewResults (Err _) ->
-            ( { model | friends = [] }, Cmd.none )
+        FriendsResponse response ->
+            ( { model | friends = response }, Cmd.none )
 
 
 
@@ -81,12 +79,20 @@ viewSearchInput query =
         [ text query ]
 
 
-{-|
-TODO: switch on web data type - render error/loading/results
--}
-viewResults : List Friend -> Html Msg
+viewResults : WebData Friends -> Html Msg
 viewResults friends =
-    viewFriendList friends
+    case friends of
+        NotAsked ->
+            text "Initialising."
+
+        Loading ->
+            text "Loading."
+
+        Failure error ->
+            text (toString error)
+
+        Success friends ->
+            viewFriendList friends.results
 
 
 viewFriendList : List Friend -> Html Msg
@@ -108,9 +114,9 @@ viewFriend friend =
 -- HTTP
 
 
-decodeResponse : Json.Decode.Decoder Response
-decodeResponse =
-    decode Response
+decodeFriends : Json.Decode.Decoder Friends
+decodeFriends =
+    decode Friends
         |> required "count" int
         |> required "results" (list decodeFriend)
 
@@ -123,13 +129,16 @@ decodeFriend =
         |> required "username" string
 
 
+friendsUrl : String -> String
+friendsUrl query =
+    "http://localhost:8000/api/friends?q=" ++ query
+
+
 getFriends : String -> Cmd Msg
 getFriends query =
-    let
-        url =
-            "http://localhost:8000/api/friends?q=" ++ query
-    in
-        Http.send NewResults (Http.get url decodeResponse)
+    Http.get (friendsUrl query) decodeFriends
+        |> RemoteData.sendRequest
+        |> Cmd.map FriendsResponse
 
 
 
