@@ -5,7 +5,7 @@ import Html.Attributes exposing (type_, placeholder, autocomplete, class)
 import Html.Events exposing (..)
 import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
-import Http
+import Http exposing (..)
 import RemoteData exposing (..)
 
 
@@ -21,6 +21,7 @@ type alias Friend =
 
 type alias Friends =
     { count : Int
+    , query : String
     , results : List Friend
     }
 
@@ -52,7 +53,15 @@ update msg model =
             ( Model query Loading, getFriends query )
 
         FriendsResponse response ->
-            ( { model | friends = response }, Cmd.none )
+            case response of
+                Success friends ->
+                    if friends.query /= model.query then
+                        ( model, Cmd.none )
+                    else
+                        ( { model | friends = response }, Cmd.none )
+
+                _ ->
+                    ( { model | friends = response }, Cmd.none )
 
 
 
@@ -88,11 +97,22 @@ viewResults friends =
         Loading ->
             text "Loading."
 
-        Failure error ->
-            text (toString error)
+        Failure _ ->
+            viewError "Sorry! Request for failed."
 
         Success friends ->
             viewFriendList friends.results
+
+
+viewError : String -> Html Msg
+viewError message =
+    div [ class "error-view" ]
+        [ h5 []
+            [ i [ class "fa fa-exclamation-triangle" ] []
+            , text "Sorry! Request failed."
+            , span [ class "details" ] [ text " Press enter to try again." ]
+            ]
+        ]
 
 
 viewFriendList : List Friend -> Html Msg
@@ -118,6 +138,7 @@ decodeFriends : Json.Decode.Decoder Friends
 decodeFriends =
     decode Friends
         |> required "count" int
+        |> required "query" string
         |> required "results" (list decodeFriend)
 
 

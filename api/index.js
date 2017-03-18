@@ -19,9 +19,9 @@ app.get('/api/friends', (req, res) => {
 
   setTimeout(() => {
     if (Math.random() < FAILURE_RATE) {
-      res.status(500).send(`Sorry! Request for "${q}" failed 😥.`);
+      res.status(500).send(`Sorry! Request for ${q} failed 😥.`);
     } else {
-      res.json({ results, count: results.length });
+      res.json({ results, count: results.length, query: query.q });
     }
   }, Math.random() * 1000);
 });
