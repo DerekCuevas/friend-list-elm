@@ -12,16 +12,16 @@ import RemoteData exposing (..)
 -- MODEL
 
 
-type alias Friends =
-    { count : Int
-    , results : List Friend
-    }
-
-
 type alias Friend =
     { id : Int
     , name : String
     , username : String
+    }
+
+
+type alias Friends =
+    { count : Int
+    , results : List Friend
     }
 
 
