@@ -48,6 +48,10 @@
   margin: 5px 0;
 }
 
+.error-view .error-message {
+  margin-left: 5px;
+}
+
 .error-view .details {
   font-weight: normal;
 }

@@ -2,11 +2,11 @@ module App exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (type_, placeholder, autocomplete, class)
-import Html.Events exposing (..)
+import Html.Events exposing (on, onInput, onClick, keyCode)
 import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
-import Http exposing (..)
 import RemoteData exposing (..)
+import Http
 
 
 -- MODEL
@@ -21,6 +21,7 @@ type alias Friend =
 
 type alias Friends =
     { count : Int
+    , query : String
     , results : List Friend
     }
 
@@ -42,7 +43,7 @@ init =
 
 type Msg
     = SetQuery String
-    | Enter
+    | Search
     | FriendsResponse (WebData Friends)
 
 
@@ -52,7 +53,7 @@ update msg model =
         SetQuery query ->
             ( Model query Loading, getFriends query )
 
-        Enter ->
+        Search ->
             ( { model | friends = Loading }, getFriends model.query )
 
         FriendsResponse response ->
@@ -88,10 +89,9 @@ viewSearchInput query =
     input
         [ type_ "search"
         , placeholder "Search friends..."
-        , autocomplete False
         , class "search-input"
         , onInput SetQuery
-        , onEnter Enter
+        , onEnter Search
         ]
         [ text query ]
 
@@ -99,11 +99,11 @@ viewSearchInput query =
 errorMessage : Http.Error -> String
 errorMessage error =
     case error of
-        BadStatus { body } ->
+        Http.BadStatus { body } ->
             body
 
         _ ->
-            "Sorry! Request failed."
+            "Request failed."
 
 
 viewFriends : WebData Friends -> Html Msg
@@ -119,7 +119,7 @@ viewFriends friends =
             viewError (errorMessage error)
 
         Success friends ->
-            viewFriendList friends.results
+            viewFriendList friends
 
 
 viewError : String -> Html Msg
@@ -127,15 +127,25 @@ viewError message =
     div [ class "error-view" ]
         [ h5 []
             [ i [ class "fa fa-exclamation-triangle" ] []
-            , text message
-            , span [ class "details" ] [ text " Press enter to try again." ]
+            , span [ class "error-message" ] [ text message ]
+            , span [ class "details", onClick Search ]
+                [ text " Press enter or click to try again." ]
             ]
         ]
 
 
-viewFriendList : List Friend -> Html Msg
-viewFriendList friends =
-    ul [ class "friend-list" ] (List.map viewFriend friends)
+viewNoResults : String -> Html Msg
+viewNoResults query =
+    div [ class "no-results" ]
+        [ text ("No results for '" ++ query ++ "' found.") ]
+
+
+viewFriendList : Friends -> Html Msg
+viewFriendList { count, query, results } =
+    if count == 0 then
+        viewNoResults query
+    else
+        ul [ class "friend-list" ] (List.map viewFriend results)
 
 
 viewFriend : Friend -> Html Msg
@@ -152,14 +162,15 @@ viewFriend friend =
 -- HTTP
 
 
-decodeFriends : Json.Decode.Decoder Friends
+decodeFriends : Decoder Friends
 decodeFriends =
     decode Friends
         |> required "count" int
+        |> required "query" string
         |> required "results" (list decodeFriend)
 
 
-decodeFriend : Json.Decode.Decoder Friend
+decodeFriend : Decoder Friend
 decodeFriend =
     decode Friend
         |> required "id" int
