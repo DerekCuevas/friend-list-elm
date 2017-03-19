@@ -136,8 +136,7 @@ viewError message =
 
 viewNoResults : String -> Html Msg
 viewNoResults query =
-    div [ class "no-results" ]
-        [ text ("No results for '" ++ query ++ "' found.") ]
+    text ("No results for '" ++ query ++ "' found.")
 
 
 viewFriendList : Friends -> Html Msg
