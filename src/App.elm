@@ -67,7 +67,7 @@ view : Model -> Html Msg
 view model =
     div [ class "app" ]
         [ (viewSearchInput model.query)
-        , (viewResults model.friends)
+        , (viewFriends model.friends)
         ]
 
 
@@ -106,8 +106,8 @@ errorMessage error =
             "Sorry! Request failed."
 
 
-viewResults : WebData Friends -> Html Msg
-viewResults friends =
+viewFriends : WebData Friends -> Html Msg
+viewFriends friends =
     case friends of
         NotAsked ->
             text "Initialising."
