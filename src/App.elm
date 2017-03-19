@@ -3,7 +3,7 @@ module App exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (type_, placeholder, autocomplete, class)
 import Html.Events exposing (..)
-import Json.Decode exposing (Decoder, int, string, list)
+import Json.Decode exposing (Decoder, int, string, list, succeed, fail, andThen)
 import Json.Decode.Pipeline exposing (decode, required)
 import Http exposing (..)
 import RemoteData exposing (..)
@@ -21,7 +21,6 @@ type alias Friend =
 
 type alias Friends =
     { count : Int
-    , query : String
     , results : List Friend
     }
 
@@ -43,6 +42,7 @@ init =
 
 type Msg
     = SetQuery String
+    | Enter
     | FriendsResponse (WebData Friends)
 
 
@@ -52,16 +52,11 @@ update msg model =
         SetQuery query ->
             ( Model query Loading, getFriends query )
 
-        FriendsResponse response ->
-            case response of
-                Success friends ->
-                    if friends.query /= model.query then
-                        ( model, Cmd.none )
-                    else
-                        ( { model | friends = response }, Cmd.none )
+        Enter ->
+            ( { model | friends = Loading }, getFriends model.query )
 
-                _ ->
-                    ( { model | friends = response }, Cmd.none )
+        FriendsResponse response ->
+            ( { model | friends = response }, Cmd.none )
 
 
 
@@ -76,6 +71,18 @@ view model =
         ]
 
 
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.Decode.succeed msg
+            else
+                Json.Decode.fail "not ENTER"
+    in
+        on "keydown" (Json.Decode.andThen isEnter keyCode)
+
+
 viewSearchInput : String -> Html Msg
 viewSearchInput query =
     input
@@ -84,8 +91,19 @@ viewSearchInput query =
         , autocomplete False
         , class "search-input"
         , onInput SetQuery
+        , onEnter Enter
         ]
         [ text query ]
+
+
+errorMessage : Http.Error -> String
+errorMessage error =
+    case error of
+        BadStatus { body } ->
+            body
+
+        _ ->
+            "Sorry! Request failed."
 
 
 viewResults : WebData Friends -> Html Msg
@@ -97,8 +115,8 @@ viewResults friends =
         Loading ->
             text "Loading."
 
-        Failure _ ->
-            viewError "Sorry! Request failed."
+        Failure error ->
+            viewError (errorMessage error)
 
         Success friends ->
             viewFriendList friends.results
@@ -109,7 +127,7 @@ viewError message =
     div [ class "error-view" ]
         [ h5 []
             [ i [ class "fa fa-exclamation-triangle" ] []
-            , text "Sorry! Request failed."
+            , text message
             , span [ class "details" ] [ text " Press enter to try again." ]
             ]
         ]
@@ -138,7 +156,6 @@ decodeFriends : Json.Decode.Decoder Friends
 decodeFriends =
     decode Friends
         |> required "count" int
-        |> required "query" string
         |> required "results" (list decodeFriend)
 
 
