@@ -71,20 +71,21 @@ type Msg
     | UrlChange Location
 
 
+nextUrl : String -> String
+nextUrl query =
+    if (String.length query) == 0 then
+        "/"
+    else
+        "/?q=" ++ query
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetQuery query ->
-            let
-                nextUrl =
-                    if (String.length query) == 0 then
-                        "/"
-                    else
-                        "/?q=" ++ query
-            in
-                ( Model query Loading
-                , Cmd.batch [ newUrl nextUrl, getFriends query ]
-                )
+            ( Model query Loading
+            , Cmd.batch [ newUrl (nextUrl query), getFriends query ]
+            )
 
         Search ->
             ( { model | friends = Loading }, getFriends model.query )
