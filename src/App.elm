@@ -1,12 +1,31 @@
 module App exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (type_, placeholder, autocomplete, class)
+import Html exposing (Html, Attribute, div, span, input, ul, li, h5, text, i)
+import Html.Attributes exposing (type_, placeholder, autocomplete, class, value)
 import Html.Events exposing (on, onInput, onClick, keyCode)
 import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
 import RemoteData exposing (..)
 import Http
+import Navigation exposing (Location, newUrl)
+import UrlParser exposing (parsePath, s, stringParam, (<?>))
+
+
+-- HELPERS
+
+
+parseQuery : Location -> String
+parseQuery location =
+    case parsePath (s "" <?> stringParam "q") location of
+        Nothing ->
+            ""
+
+        Just Nothing ->
+            ""
+
+        Just (Just query) ->
+            query
+
 
 
 -- MODEL
@@ -32,9 +51,13 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model "" Loading, getFriends "" )
+init : Location -> ( Model, Cmd Msg )
+init location =
+    let
+        query =
+            parseQuery location
+    in
+        ( Model query Loading, getFriends query )
 
 
 
@@ -45,19 +68,39 @@ type Msg
     = SetQuery String
     | Search
     | FriendsResponse (WebData Friends)
+    | UrlChange Location
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetQuery query ->
-            ( Model query Loading, getFriends query )
+            let
+                nextUrl =
+                    if (String.length query) == 0 then
+                        "/"
+                    else
+                        "/?q=" ++ query
+            in
+                ( Model query Loading
+                , Cmd.batch [ newUrl nextUrl, getFriends query ]
+                )
 
         Search ->
             ( { model | friends = Loading }, getFriends model.query )
 
         FriendsResponse response ->
             ( { model | friends = response }, Cmd.none )
+
+        UrlChange location ->
+            let
+                query =
+                    parseQuery location
+            in
+                if model.query /= query then
+                    ( { model | query = query }, getFriends query )
+                else
+                    ( model, Cmd.none )
 
 
 
@@ -90,6 +133,7 @@ viewSearchInput query =
         [ type_ "search"
         , placeholder "Search friends..."
         , class "search-input"
+        , value query
         , onInput SetQuery
         , onEnter Search
         ]
