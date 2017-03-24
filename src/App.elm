@@ -14,17 +14,13 @@ import UrlParser exposing (parsePath, s, stringParam, (<?>))
 -- HELPERS
 
 
-parseQuery : Location -> String
+parseQuery : Location -> Maybe String
 parseQuery location =
-    case parsePath (s "" <?> stringParam "q") location of
-        Nothing ->
-            ""
-
-        Just Nothing ->
-            ""
-
-        Just (Just query) ->
-            query
+    let
+        query =
+            parsePath (s "" <?> stringParam "q") location
+    in
+        Maybe.withDefault Nothing query
 
 
 
@@ -55,7 +51,7 @@ init : Location -> ( Model, Cmd Msg )
 init location =
     let
         query =
-            parseQuery location
+            Maybe.withDefault "" (parseQuery location)
     in
         ( Model query Loading, getFriends query )
 
@@ -96,7 +92,7 @@ update msg model =
         UrlChange location ->
             let
                 query =
-                    parseQuery location
+                    Maybe.withDefault "" (parseQuery location)
             in
                 if model.query /= query then
                     ( { model | query = query }, getFriends query )
