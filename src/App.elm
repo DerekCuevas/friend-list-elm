@@ -68,7 +68,7 @@ type Msg
 
 nextUrl : String -> String
 nextUrl query =
-    if (String.length query) == 0 then
+    if String.length query == 0 then
         "/"
     else
         "/?q=" ++ query
@@ -78,7 +78,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetQuery query ->
-            ( Model query Loading
+            ( { model | query = query, friends = Loading }
             , Cmd.batch [ newUrl (nextUrl query), getFriends query ]
             )
 
@@ -109,8 +109,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "app" ]
-        [ (viewSearchInput model.query)
-        , (viewFriends model.query model.friends)
+        [ (viewSearchInput model)
+        , (viewFriends model)
         ]
 
 
@@ -126,8 +126,8 @@ onEnter msg =
         on "keydown" (Json.Decode.andThen isEnter keyCode)
 
 
-viewSearchInput : String -> Html Msg
-viewSearchInput query =
+viewSearchInput : Model -> Html Msg
+viewSearchInput { query } =
     input
         [ type_ "search"
         , placeholder "Search friends..."
@@ -149,8 +149,8 @@ errorMessage error =
             "Request failed."
 
 
-viewFriends : String -> WebData Friends -> Html Msg
-viewFriends query friends =
+viewFriends : Model -> Html Msg
+viewFriends { query, friends } =
     case friends of
         NotAsked ->
             text "Initialising."
