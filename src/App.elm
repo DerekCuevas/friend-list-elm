@@ -36,7 +36,6 @@ type alias Friend =
 
 type alias Friends =
     { count : Int
-    , query : String
     , results : List Friend
     }
 
@@ -63,7 +62,7 @@ init location =
 type Msg
     = SetQuery String
     | Search
-    | FriendsResponse (WebData Friends)
+    | FriendsResponse String (WebData Friends)
     | UrlChange Location
 
 
@@ -86,8 +85,11 @@ update msg model =
         Search ->
             ( { model | friends = Loading }, getFriends model.query )
 
-        FriendsResponse response ->
-            ( { model | friends = response }, Cmd.none )
+        FriendsResponse query response ->
+            if model.query == query then
+                ( { model | friends = response }, Cmd.none )
+            else
+                ( model, Cmd.none )
 
         UrlChange location ->
             let
@@ -108,7 +110,7 @@ view : Model -> Html Msg
 view model =
     div [ class "app" ]
         [ (viewSearchInput model.query)
-        , (viewFriends model.friends)
+        , (viewFriends model.query model.friends)
         ]
 
 
@@ -147,8 +149,8 @@ errorMessage error =
             "Request failed."
 
 
-viewFriends : WebData Friends -> Html Msg
-viewFriends friends =
+viewFriends : String -> WebData Friends -> Html Msg
+viewFriends query friends =
     case friends of
         NotAsked ->
             text "Initialising."
@@ -160,7 +162,7 @@ viewFriends friends =
             viewError (errorMessage error)
 
         Success friends ->
-            viewFriendList friends
+            viewFriendList query friends
 
 
 viewError : String -> Html Msg
@@ -180,8 +182,8 @@ viewNoResults query =
     text ("No results for '" ++ query ++ "' found.")
 
 
-viewFriendList : Friends -> Html Msg
-viewFriendList { count, query, results } =
+viewFriendList : String -> Friends -> Html Msg
+viewFriendList query { count, results } =
     if count == 0 then
         viewNoResults query
     else
@@ -206,7 +208,6 @@ decodeFriends : Decoder Friends
 decodeFriends =
     decode Friends
         |> required "count" int
-        |> required "query" string
         |> required "results" (list decodeFriend)
 
 
@@ -227,7 +228,7 @@ getFriends : String -> Cmd Msg
 getFriends query =
     Http.get (friendsUrl query) decodeFriends
         |> RemoteData.sendRequest
-        |> Cmd.map FriendsResponse
+        |> Cmd.map (FriendsResponse query)
 
 
 
