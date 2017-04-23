@@ -9,6 +9,8 @@ import RemoteData exposing (..)
 import Http
 import Navigation exposing (Location, newUrl)
 import UrlParser exposing (parsePath, s, stringParam, (<?>))
+import Debounce
+import Time exposing (Time)
 
 
 -- HELPERS
@@ -21,6 +23,18 @@ parseQuery location =
             parsePath (s "" <?> stringParam "q") location
     in
         Maybe.withDefault Nothing query
+
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.Decode.succeed msg
+            else
+                Json.Decode.fail "not ENTER"
+    in
+        on "keydown" (Json.Decode.andThen isEnter keyCode)
 
 
 
@@ -36,6 +50,7 @@ type alias Friend =
 
 type alias Friends =
     { count : Int
+    , query : String
     , results : List Friend
     }
 
@@ -43,7 +58,13 @@ type alias Friends =
 type alias Model =
     { query : String
     , friends : WebData Friends
+    , debouncer : Debounce.Model String
     }
+
+
+settleTime : Time
+settleTime =
+    100
 
 
 init : Location -> ( Model, Cmd Msg )
@@ -51,8 +72,11 @@ init location =
     let
         query =
             Maybe.withDefault "" (parseQuery location)
+
+        debouncer =
+            Debounce.init settleTime query
     in
-        ( Model query Loading, getFriends query )
+        ( Model query Loading debouncer, getFriends query )
 
 
 
@@ -62,8 +86,9 @@ init location =
 type Msg
     = SetQuery String
     | Search
-    | FriendsResponse String (WebData Friends)
+    | SearchResponse String (WebData Friends)
     | UrlChange Location
+    | DebouncerMsg (Debounce.Msg String)
 
 
 nextUrl : String -> String
@@ -78,14 +103,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetQuery query ->
-            ( { model | query = query, friends = Loading }
-            , Cmd.batch [ newUrl (nextUrl query), getFriends query ]
-            )
+            { model | query = query }
+                |> updateDebouncer (Debounce.Change query)
 
         Search ->
             ( { model | friends = Loading }, getFriends model.query )
 
-        FriendsResponse query response ->
+        SearchResponse query response ->
             if model.query == query then
                 ( { model | friends = response }, Cmd.none )
             else
@@ -101,33 +125,45 @@ update msg model =
                 else
                     ( model, Cmd.none )
 
+        DebouncerMsg dmsg ->
+            updateDebouncer dmsg model
+
+
+updateDebouncer : Debounce.Msg String -> Model -> ( Model, Cmd Msg )
+updateDebouncer dmsg model =
+    let
+        ( nextDebouncer, cmd, settledMaybe ) =
+            Debounce.update dmsg model.debouncer
+    in
+        case settledMaybe of
+            Nothing ->
+                ( { model | debouncer = nextDebouncer }
+                , Cmd.map DebouncerMsg cmd
+                )
+
+            Just nextDebouncedQuery ->
+                ( { model | debouncer = nextDebouncer }
+                , Cmd.batch
+                    [ newUrl (nextUrl nextDebouncedQuery)
+                    , getFriends nextDebouncedQuery
+                    ]
+                )
+
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view model =
+view { query, friends } =
     div [ class "app" ]
-        [ (viewSearchInput model)
-        , (viewFriends model)
+        [ (viewSearchInput query)
+        , (viewFriends friends)
         ]
 
 
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        isEnter code =
-            if code == 13 then
-                Json.Decode.succeed msg
-            else
-                Json.Decode.fail "not ENTER"
-    in
-        on "keydown" (Json.Decode.andThen isEnter keyCode)
-
-
-viewSearchInput : Model -> Html Msg
-viewSearchInput { query } =
+viewSearchInput : String -> Html Msg
+viewSearchInput query =
     input
         [ type_ "search"
         , placeholder "Search friends..."
@@ -149,8 +185,8 @@ errorMessage error =
             "Request failed."
 
 
-viewFriends : Model -> Html Msg
-viewFriends { query, friends } =
+viewFriends : WebData Friends -> Html Msg
+viewFriends friends =
     case friends of
         NotAsked ->
             text "Initialising."
@@ -162,15 +198,14 @@ viewFriends { query, friends } =
             viewError (errorMessage error)
 
         Success friends ->
-            viewFriendList query friends
+            viewFriendList friends
 
 
 viewError : String -> Html Msg
 viewError message =
     div [ class "error-view" ]
         [ h5 []
-            [ i [ class "fa fa-exclamation-triangle" ] []
-            , span [ class "error-message" ] [ text message ]
+            [ span [ class "error-message" ] [ text message ]
             , span [ class "details", onClick Search ]
                 [ text " Press enter or click to try again." ]
             ]
@@ -182,8 +217,8 @@ viewNoResults query =
     text ("No results for '" ++ query ++ "' found.")
 
 
-viewFriendList : String -> Friends -> Html Msg
-viewFriendList query { count, results } =
+viewFriendList : Friends -> Html Msg
+viewFriendList { count, query, results } =
     if count == 0 then
         viewNoResults query
     else
@@ -208,6 +243,7 @@ decodeFriends : Decoder Friends
 decodeFriends =
     decode Friends
         |> required "count" int
+        |> required "query" string
         |> required "results" (list decodeFriend)
 
 
@@ -228,7 +264,7 @@ getFriends : String -> Cmd Msg
 getFriends query =
     Http.get (friendsUrl query) decodeFriends
         |> RemoteData.sendRequest
-        |> Cmd.map (FriendsResponse query)
+        |> Cmd.map (SearchResponse query)
 
 
 
