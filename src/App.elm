@@ -134,15 +134,16 @@ updateDebouncer dmsg model =
     let
         ( nextDebouncer, cmd, settledMaybe ) =
             Debounce.update dmsg model.debouncer
+
+        nextModel =
+            { model | debouncer = nextDebouncer }
     in
         case settledMaybe of
             Nothing ->
-                ( { model | debouncer = nextDebouncer }
-                , Cmd.map DebouncerMsg cmd
-                )
+                ( nextModel, Cmd.map DebouncerMsg cmd )
 
             Just nextDebouncedQuery ->
-                ( { model | debouncer = nextDebouncer }
+                ( nextModel
                 , Cmd.batch
                     [ newUrl (nextUrl nextDebouncedQuery)
                     , getFriends nextDebouncedQuery
