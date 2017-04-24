@@ -10,7 +10,7 @@ import Http
 import Navigation exposing (Location, newUrl)
 import UrlParser exposing (parsePath, s, stringParam, (<?>))
 import Debounce
-import Time exposing (Time)
+import Time exposing (..)
 
 
 -- HELPERS
@@ -64,7 +64,7 @@ type alias Model =
 
 settleTime : Time
 settleTime =
-    100
+    100 * millisecond
 
 
 init : Location -> ( Model, Cmd Msg )
