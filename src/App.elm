@@ -132,22 +132,19 @@ update msg model =
 updateDebouncer : Debounce.Msg String -> Model -> ( Model, Cmd Msg )
 updateDebouncer dmsg model =
     let
-        ( nextDebouncer, cmd, settledMaybe ) =
+        ( nextDebouncer, cmd, settledQuery ) =
             Debounce.update dmsg model.debouncer
 
         nextModel =
             { model | debouncer = nextDebouncer }
     in
-        case settledMaybe of
+        case settledQuery of
             Nothing ->
                 ( nextModel, Cmd.map DebouncerMsg cmd )
 
-            Just nextDebouncedQuery ->
+            Just query ->
                 ( nextModel
-                , Cmd.batch
-                    [ newUrl (nextUrl nextDebouncedQuery)
-                    , getFriends nextDebouncedQuery
-                    ]
+                , Cmd.batch [ newUrl (nextUrl query), getFriends query ]
                 )
 
 
@@ -207,8 +204,8 @@ viewError message =
     div [ class "error-view" ]
         [ h5 []
             [ span [ class "error-message" ] [ text message ]
-            , span [ class "details", onClick Search ]
-                [ text " Press enter or click to try again." ]
+            , span [ class "details" ]
+                [ text " Press enter to try again." ]
             ]
         ]
 
@@ -266,12 +263,3 @@ getFriends query =
     Http.get (friendsUrl query) decodeFriends
         |> RemoteData.sendRequest
         |> Cmd.map (SearchResponse query)
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none

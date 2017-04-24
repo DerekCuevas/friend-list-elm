@@ -4,10 +4,11 @@ import App exposing (..)
 import Navigation exposing (program)
 
 
+main : Program Never Model Msg
 main =
     program UrlChange
         { view = view
         , init = init
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }
