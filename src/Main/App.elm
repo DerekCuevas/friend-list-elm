@@ -177,8 +177,8 @@ updateDebouncer dmsg model =
 view : Model -> Html Msg
 view { query, friends } =
     div [ class "app" ]
-        [ (viewSearchInput query)
-        , (viewFriends friends)
+        [ viewSearchInput query
+        , viewFriends friends
         ]
 
 
@@ -215,7 +215,7 @@ viewFriends friends =
             text "Loading."
 
         Failure error ->
-            viewError (errorMessage error)
+            viewError <| errorMessage error
 
         Success friends ->
             viewFriendList friends
@@ -226,15 +226,14 @@ viewError message =
     div [ class "error-view" ]
         [ h5 []
             [ span [ class "error-message" ] [ text message ]
-            , span [ class "details" ]
-                [ text " Press enter to try again." ]
+            , span [ class "details" ] [ text " Press enter to try again." ]
             ]
         ]
 
 
 viewNoResults : String -> Html Msg
 viewNoResults query =
-    text ("No results for '" ++ query ++ "' found.")
+    text <| "No results for '" ++ query ++ "' found."
 
 
 viewFriendList : Friends -> Html Msg
@@ -242,7 +241,7 @@ viewFriendList { count, query, results } =
     if count == 0 then
         viewNoResults query
     else
-        ul [ class "friend-list" ] (List.map viewFriend results)
+        ul [ class "friend-list" ] <| List.map viewFriend results
 
 
 viewFriend : Friend -> Html Msg
