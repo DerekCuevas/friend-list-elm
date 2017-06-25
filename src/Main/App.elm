@@ -3,14 +3,14 @@ module Main.App exposing (..)
 import Html exposing (Html, Attribute, div, span, input, ul, li, h5, text, i)
 import Html.Attributes exposing (type_, placeholder, autocomplete, class, value)
 import Html.Events exposing (on, onInput, onClick, keyCode)
-import Json.Decode exposing (Decoder, int, string, list)
-import Json.Decode.Pipeline exposing (decode, required)
-import RemoteData exposing (..)
-import Http
 import Navigation exposing (Location, newUrl, program)
 import UrlParser exposing (parsePath, s, stringParam, (<?>))
-import Debounce
+import Http
+import RemoteData exposing (..)
+import Json.Decode as Decode exposing (Decoder, int, string, list)
+import Json.Decode.Pipeline exposing (decode, required)
 import Time exposing (..)
+import Debounce
 
 
 main : Program Never Model Msg
@@ -41,11 +41,11 @@ onEnter msg =
     let
         isEnter code =
             if code == 13 then
-                Json.Decode.succeed msg
+                Decode.succeed msg
             else
-                Json.Decode.fail "not ENTER"
+                Decode.fail "not ENTER"
     in
-        on "keydown" (Json.Decode.andThen isEnter keyCode)
+        on "keydown" (Decode.andThen isEnter keyCode)
 
 
 
