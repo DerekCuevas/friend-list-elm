@@ -2,16 +2,24 @@
   "name": "friend-list-elm",
   "version": "1.0.0",
   "description": "[WIP]",
-  "main": "index.js",
+  "main": "src/index.js",
+  "author": "Derek Cuevas <dccuevas2@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/DerekCuevas/friend-list-elm.git",
+  "scripts": {
+    "api": "node ./api/index.js",
+    "dev": "webpack-dev-server --port 3000 --content-base dist/"
+  },
   "dependencies": {
     "cors": "^2.8.1",
     "express": "^4.15.2"
   },
-  "devDependencies": {},
-  "scripts": {
-    "start": "node ./api/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Derek Cuevas <dccuevas2@gmail.com>",
-  "license": "MIT"
+  "devDependencies": {
+    "css-loader": "^0.28.4",
+    "elm-hot-loader": "^0.5.4",
+    "elm-webpack-loader": "^4.3.1",
+    "style-loader": "^0.18.2",
+    "webpack": "^3.0.0",
+    "webpack-dev-server": "^2.5.0"
+  }
 }
