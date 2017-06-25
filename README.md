@@ -10,4 +10,6 @@ An implementation of [this](https://github.com/DerekCuevas/friend-list) front-en
 - `yarn run dev`
 - open `http://localhost:3000`
 
+## Demo
+
 ![alt tag](friend-list-elm.gif)
