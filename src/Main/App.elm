@@ -1,4 +1,4 @@
-module App exposing (..)
+module Main.App exposing (..)
 
 import Html exposing (Html, Attribute, div, span, input, ul, li, h5, text, i)
 import Html.Attributes exposing (type_, placeholder, autocomplete, class, value)
@@ -7,10 +7,21 @@ import Json.Decode exposing (Decoder, int, string, list)
 import Json.Decode.Pipeline exposing (decode, required)
 import RemoteData exposing (..)
 import Http
-import Navigation exposing (Location, newUrl)
+import Navigation exposing (Location, newUrl, program)
 import UrlParser exposing (parsePath, s, stringParam, (<?>))
 import Debounce
 import Time exposing (..)
+
+
+main : Program Never Model Msg
+main =
+    program UrlChange
+        { view = view
+        , init = init
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        }
+
 
 
 -- HELPERS
@@ -55,16 +66,27 @@ type alias Friends =
     }
 
 
+decodeFriends : Decoder Friends
+decodeFriends =
+    decode Friends
+        |> required "count" int
+        |> required "query" string
+        |> required "results" (list decodeFriend)
+
+
+decodeFriend : Decoder Friend
+decodeFriend =
+    decode Friend
+        |> required "id" int
+        |> required "name" string
+        |> required "username" string
+
+
 type alias Model =
     { query : String
     , friends : WebData Friends
     , debouncer : Debounce.Model String
     }
-
-
-settleTime : Time
-settleTime =
-    100 * millisecond
 
 
 init : Location -> ( Model, Cmd Msg )
@@ -74,7 +96,7 @@ init location =
             Maybe.withDefault "" (parseQuery location)
 
         debouncer =
-            Debounce.init settleTime query
+            Debounce.init (100 * millisecond) query
     in
         ( Model query Loading debouncer, getFriends query )
 
@@ -235,22 +257,6 @@ viewFriend friend =
 
 
 -- HTTP
-
-
-decodeFriends : Decoder Friends
-decodeFriends =
-    decode Friends
-        |> required "count" int
-        |> required "query" string
-        |> required "results" (list decodeFriend)
-
-
-decodeFriend : Decoder Friend
-decodeFriend =
-    decode Friend
-        |> required "id" int
-        |> required "name" string
-        |> required "username" string
 
 
 friendsUrl : String -> String
