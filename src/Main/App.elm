@@ -118,7 +118,7 @@ nextUrl query =
     if String.length query == 0 then
         "/"
     else
-        "/?q=" ++ query
+        "/?q=" ++ (Http.encodeUri query)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
