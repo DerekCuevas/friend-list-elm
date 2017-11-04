@@ -1,5 +1,5 @@
 require("./main.css");
-var Elm = require("./Main/App.elm");
+var Elm = require("./Main.elm");
 
 var root = document.getElementById("root");
 

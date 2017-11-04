@@ -46,6 +46,15 @@ onEnter msg =
 
 
 
+-- CONSTANTS --
+
+
+searchDebounce : Time
+searchDebounce =
+    100 * Time.millisecond
+
+
+
 -- MODEL
 
 
@@ -91,11 +100,13 @@ init location =
     let
         query =
             Maybe.withDefault "" (parseQuery location)
-
-        debouncer =
-            Debounce.init (100 * Time.millisecond) query
     in
-        ( Model query Loading debouncer, getFriends query )
+        ( { query = query
+          , friends = Loading
+          , debouncer = Debounce.init searchDebounce query
+          }
+        , getFriends query
+        )
 
 
 
