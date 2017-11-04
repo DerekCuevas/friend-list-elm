@@ -46,7 +46,7 @@ onEnter msg =
 
 
 
--- CONSTANTS --
+-- CONSTANTS
 
 
 searchDebounce : Time
@@ -230,8 +230,11 @@ viewFriendsWebData friendsWebData =
         Failure error ->
             viewError error
 
-        Success friends ->
-            viewFriendList friends
+        Success { count, query, results } ->
+            if List.isEmpty results then
+                viewNoResults query
+            else
+                viewFriendList results
 
 
 viewError : Http.Error -> Html Msg
@@ -251,13 +254,10 @@ viewNoResults query =
     text ("No results for '" ++ query ++ "' found.")
 
 
-viewFriendList : Friends -> Html Msg
-viewFriendList { count, query, results } =
-    if count == 0 then
-        viewNoResults query
-    else
-        ul [ class "friend-list" ]
-            (List.map viewFriend results)
+viewFriendList : List Friend -> Html Msg
+viewFriendList friends =
+    ul [ class "friend-list" ]
+        (List.map viewFriend friends)
 
 
 viewFriend : Friend -> Html Msg
@@ -265,7 +265,8 @@ viewFriend friend =
     li [ class "friend-list-item" ]
         [ div [ class "friend" ]
             [ text (friend.name ++ " ")
-            , span [ class "username" ] [ text friend.username ]
+            , span [ class "username" ]
+                [ text friend.username ]
             ]
         ]
 
